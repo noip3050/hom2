@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>3D Indoor Navigation</title>
+    <title>3D Walking Navigation</title>
     <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
   </head>
   <body>
@@ -12,16 +12,10 @@
       <a-sky color="#ECECEC"></a-sky>
 
       <!-- الجدران والغرف -->
-      <!-- الجدران الخارجية -->
       <a-box position="0 1.5 -10" width="20" height="3" depth="0.2" color="#888"></a-box>
       <a-box position="-10 1.5 0" width="0.2" height="3" depth="20" color="#888"></a-box>
       <a-box position="10 1.5 0" width="0.2" height="3" depth="20" color="#888"></a-box>
       <a-box position="0 1.5 10" width="20" height="3" depth="0.2" color="#888"></a-box>
-
-      <!-- الممرات (الأسياح) -->
-      <a-box position="0 1.5 0" width="2" height="3" depth="0.2" color="#444"></a-box>
-      <a-box position="-5 1.5 -5" width="0.2" height="3" depth="10" color="#444"></a-box>
-      <a-box position="5 1.5 -5" width="0.2" height="3" depth="10" color="#444"></a-box>
 
       <!-- الغرف -->
       <a-box
@@ -75,50 +69,36 @@
       </a-entity>
     </a-scene>
 
-    <!-- قائمة تفاعلية -->
-    <div
-      id="menu"
-      style="position: absolute; top: 10px; left: 10px; z-index: 100;"
-    >
-      <button onclick="navigateTo('-7.5 -7.5')">المطبخ</button>
-      <button onclick="navigateTo('7.5 -7.5')">غرفة النوم</button>
-      <button onclick="navigateTo('0 7.5')">المجلس</button>
-    </div>
-
     <script>
       const camera = document.querySelector("#camera");
+      let lastZ = null; // لتخزين آخر قيمة للمحور Z
 
-      // وظيفة التنقل إلى غرفة محددة
-      function navigateTo(target) {
-        const [x, z] = target.split(" ").map(Number);
+      // وظيفة تتبع الحركة
+      function handleMotion(event) {
+        const acc = event.accelerationIncludingGravity;
 
-        // رسم خط موجه
-        const line = document.createElement("a-entity");
-        line.setAttribute(
-          "line",
-          `start: ${camera.getAttribute("position").x} 0.1 ${
-            camera.getAttribute("position").z
-          }; end: ${x} 0.1 ${z}; color: red;`
-        );
-        document.querySelector("a-scene").appendChild(line);
+        if (lastZ === null) lastZ = acc.z;
 
-        // تشغيل صوت الإرشاد
-        const speech = new SpeechSynthesisUtterance();
-        speech.text = `اتجه نحو ${
-          x === -7.5 ? "المطبخ" : x === 7.5 ? "غرفة النوم" : "المجلس"
-        }`;
-        speech.lang = "ar-SA";
-        window.speechSynthesis.speak(speech);
+        // حساب الفرق في الحركة على المحور Z
+        const deltaZ = acc.z - lastZ;
+
+        // إذا تحرك المستخدم للأمام أو للخلف
+        if (Math.abs(deltaZ) > 0.5) {
+          const currentPosition = camera.getAttribute("position");
+
+          // تحريك الكاميرا بناءً على الاتجاه
+          camera.setAttribute("position", {
+            x: currentPosition.x,
+            y: currentPosition.y,
+            z: currentPosition.z + (deltaZ > 0 ? -0.1 : 0.1),
+          });
+        }
+
+        lastZ = acc.z;
       }
 
-      // التحكم في الكاميرا عبر الحساسات
-      window.addEventListener("deviceorientation", (event) => {
-        camera.setAttribute("rotation", {
-          x: 0,
-          y: event.alpha || 0,
-          z: 0,
-        });
-      });
+      // تفعيل تتبع الحركة
+      window.addEventListener("devicemotion", handleMotion);
     </script>
   </body>
 </html>
