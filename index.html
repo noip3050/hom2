@@ -1,74 +1,124 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>3D Home Navigation with Real Walking</title>
-  <!-- تحميل مكتبة A-Frame -->
-  <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-  <style>
-    body { margin: 0; overflow: hidden; }
-    a-scene { width: 100%; height: 100vh; }
-  </style>
-</head>
-<body>
-  <!-- المشهد الرئيسي في A-Frame -->
-  <a-scene embedded>
-    <!-- الجدران الخارجية للمبنى -->
-    <a-box position="0 2.5 -5" width="10" height="5" depth="0.2" color="#B5651D"></a-box> <!-- الجدار الأمامي -->
-    <a-box position="0 2.5 5" width="10" height="5" depth="0.2" color="#B5651D"></a-box> <!-- الجدار الخلفي -->
-    <a-box position="-5 2.5 0" width="0.2" height="5" depth="10" color="#B5651D"></a-box> <!-- الجدار الجانبي الأيسر -->
-    <a-box position="5 2.5 0" width="0.2" height="5" depth="10" color="#B5651D"></a-box> <!-- الجدار الجانبي الأيمن -->
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>3D Indoor Navigation</title>
+    <script src="https://aframe.io/releases/1.3.0/aframe.min.js"></script>
+  </head>
+  <body>
+    <a-scene>
+      <!-- البيئة -->
+      <a-sky color="#ECECEC"></a-sky>
 
-    <!-- تقسيم الغرف داخل البيت -->
-    <a-box position="-3 1.5 2" width="4" height="3" depth="4" color="#4CC3D9" class="room" id="kitchen"></a-box>
-    <a-box position="3 1.5 2" width="4" height="3" depth="4" color="#EF2D5E" class="room" id="livingRoom"></a-box>
-    <a-box position="0 1.5 -3" width="4" height="3" depth="4" color="#FFC65D" class="room" id="bedroom"></a-box>
-    <a-box position="-3 1.5 -5" width="4" height="3" depth="4" color="#7BC8A4" class="room" id="majles"></a-box>
+      <!-- الجدران والغرف -->
+      <!-- الجدران الخارجية -->
+      <a-box position="0 1.5 -10" width="20" height="3" depth="0.2" color="#888"></a-box>
+      <a-box position="-10 1.5 0" width="0.2" height="3" depth="20" color="#888"></a-box>
+      <a-box position="10 1.5 0" width="0.2" height="3" depth="20" color="#888"></a-box>
+      <a-box position="0 1.5 10" width="20" height="3" depth="0.2" color="#888"></a-box>
 
-    <!-- الكاميرا التي ستحدد اتجاه المستخدم -->
-    <a-camera id="camera" position="0 1.6 0" look-controls="pointerLockEnabled: true;" wasd-controls="enabled: true;"></a-camera>
+      <!-- الممرات (الأسياح) -->
+      <a-box position="0 1.5 0" width="2" height="3" depth="0.2" color="#444"></a-box>
+      <a-box position="-5 1.5 -5" width="0.2" height="3" depth="10" color="#444"></a-box>
+      <a-box position="5 1.5 -5" width="0.2" height="3" depth="10" color="#444"></a-box>
+
+      <!-- الغرف -->
+      <a-box
+        position="-7.5 1.5 -7.5"
+        width="5"
+        height="3"
+        depth="5"
+        color="#FFC300"
+      >
+        <a-text
+          value="المطبخ"
+          position="0 1.8 0"
+          align="center"
+          color="#000"
+        ></a-text>
+      </a-box>
+
+      <a-box
+        position="7.5 1.5 -7.5"
+        width="5"
+        height="3"
+        depth="5"
+        color="#4CAF50"
+      >
+        <a-text
+          value="غرفة النوم"
+          position="0 1.8 0"
+          align="center"
+          color="#FFF"
+        ></a-text>
+      </a-box>
+
+      <a-box
+        position="0 1.5 7.5"
+        width="5"
+        height="3"
+        depth="5"
+        color="#2196F3"
+      >
+        <a-text
+          value="المجلس"
+          position="0 1.8 0"
+          align="center"
+          color="#FFF"
+        ></a-text>
+      </a-box>
+
+      <!-- الكاميرا -->
+      <a-entity id="camera" camera position="0 1.6 0">
+        <a-camera position="0 1.6 0"></a-camera>
+      </a-entity>
+    </a-scene>
+
+    <!-- قائمة تفاعلية -->
+    <div
+      id="menu"
+      style="position: absolute; top: 10px; left: 10px; z-index: 100;"
+    >
+      <button onclick="navigateTo('-7.5 -7.5')">المطبخ</button>
+      <button onclick="navigateTo('7.5 -7.5')">غرفة النوم</button>
+      <button onclick="navigateTo('0 7.5')">المجلس</button>
+    </div>
 
     <script>
-      let camera = document.querySelector('#camera');
-      
-      let lastPos = { x: 0, z: 0 }; // مكان الكاميرا الحالي
-      let movementSpeed = 0.05; // سرعة الحركة
+      const camera = document.querySelector("#camera");
 
-      // استخدام event listener للجيروسكوب
-      window.addEventListener('deviceorientation', function(event) {
-        let alpha = event.alpha;  // زاوية التوجيه
-        let beta = event.beta;    // زاوية الميل
-        let gamma = event.gamma;  // زاوية الدوران
+      // وظيفة التنقل إلى غرفة محددة
+      function navigateTo(target) {
+        const [x, z] = target.split(" ").map(Number);
 
-        // مع كل تغيير في الحركة، نقوم بتوجيه الكاميرا بناءً على اتجاه الجهاز
-        camera.setAttribute('rotation', {
-          x: beta,   // زاوية الميل
-          y: alpha,  // زاوية التوجيه
-          z: gamma   // زاوية الدوران
+        // رسم خط موجه
+        const line = document.createElement("a-entity");
+        line.setAttribute(
+          "line",
+          `start: ${camera.getAttribute("position").x} 0.1 ${
+            camera.getAttribute("position").z
+          }; end: ${x} 0.1 ${z}; color: red;`
+        );
+        document.querySelector("a-scene").appendChild(line);
+
+        // تشغيل صوت الإرشاد
+        const speech = new SpeechSynthesisUtterance();
+        speech.text = `اتجه نحو ${
+          x === -7.5 ? "المطبخ" : x === 7.5 ? "غرفة النوم" : "المجلس"
+        }`;
+        speech.lang = "ar-SA";
+        window.speechSynthesis.speak(speech);
+      }
+
+      // التحكم في الكاميرا عبر الحساسات
+      window.addEventListener("deviceorientation", (event) => {
+        camera.setAttribute("rotation", {
+          x: 0,
+          y: event.alpha || 0,
+          z: 0,
         });
       });
-
-      // استخدام event listener للتسارع
-      window.addEventListener('devicemotion', function(event) {
-        let accX = event.acceleration.x;  // التسارع على المحور X
-        let accY = event.acceleration.y;  // التسارع على المحور Y
-        let accZ = event.acceleration.z;  // التسارع على المحور Z
-
-        // التحقق من الحركة الأمامية والخلفية بناءً على تسارع المحور X و Z
-        if (accX > 1 || accX < -1 || accZ > 1 || accZ < -1) {
-          lastPos.x += accX * movementSpeed;
-          lastPos.z += accZ * movementSpeed;
-
-          // تحديث موقع الكاميرا
-          camera.setAttribute('position', {
-            x: lastPos.x,
-            y: 1.6,   // بقاء الكاميرا على نفس الارتفاع
-            z: lastPos.z
-          });
-        }
-      });
     </script>
-  </a-scene>
-</body>
+  </body>
 </html>
