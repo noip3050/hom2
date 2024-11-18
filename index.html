@@ -31,8 +31,11 @@
 
     <script>
       let camera = document.querySelector('#camera');
+      
+      let lastPos = { x: 0, z: 0 }; // مكان الكاميرا الحالي
+      let movementSpeed = 0.05; // سرعة الحركة
 
-      // المستشعرات: التسارع والجيروسكوب
+      // استخدام event listener للجيروسكوب
       window.addEventListener('deviceorientation', function(event) {
         let alpha = event.alpha;  // زاوية التوجيه
         let beta = event.beta;    // زاوية الميل
@@ -46,26 +49,24 @@
         });
       });
 
-      // التفاعل مع حركة المستخدم لتحديد الاتجاه
-      let movementSpeed = 0.05; // سرعة الحركة
-
-      let lastPos = { x: 0, z: 0 }; // لتتبع مكان الكاميرا الحالي
-
+      // استخدام event listener للتسارع
       window.addEventListener('devicemotion', function(event) {
-        // الحصول على تسارع الجهاز في الاتجاهات المختلفة
-        let accX = event.acceleration.x;
-        let accZ = event.acceleration.z;
+        let accX = event.acceleration.x;  // التسارع على المحور X
+        let accY = event.acceleration.y;  // التسارع على المحور Y
+        let accZ = event.acceleration.z;  // التسارع على المحور Z
 
-        // تحريك الكاميرا بناءً على التسارع (الذي يتوافق مع الحركة الفعلية)
-        lastPos.x += accX * movementSpeed;
-        lastPos.z += accZ * movementSpeed;
+        // التحقق من الحركة الأمامية والخلفية بناءً على تسارع المحور X و Z
+        if (accX > 1 || accX < -1 || accZ > 1 || accZ < -1) {
+          lastPos.x += accX * movementSpeed;
+          lastPos.z += accZ * movementSpeed;
 
-        // تحديث موقع الكاميرا بناءً على التسارع
-        camera.setAttribute('position', {
-          x: lastPos.x,
-          y: 1.6,   // بقاء الكاميرا على نفس الارتفاع
-          z: lastPos.z
-        });
+          // تحديث موقع الكاميرا
+          camera.setAttribute('position', {
+            x: lastPos.x,
+            y: 1.6,   // بقاء الكاميرا على نفس الارتفاع
+            z: lastPos.z
+          });
+        }
       });
     </script>
   </a-scene>
