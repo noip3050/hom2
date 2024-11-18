@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D Home Navigation with Real Walking</title>
+  <!-- تحميل مكتبة A-Frame -->
+  <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+  <style>
+    body { margin: 0; overflow: hidden; }
+    a-scene { width: 100%; height: 100vh; }
+  </style>
+</head>
+<body>
+  <!-- المشهد الرئيسي في A-Frame -->
+  <a-scene embedded>
+    <!-- الجدران الخارجية للمبنى -->
+    <a-box position="0 2.5 -5" width="10" height="5" depth="0.2" color="#B5651D"></a-box> <!-- الجدار الأمامي -->
+    <a-box position="0 2.5 5" width="10" height="5" depth="0.2" color="#B5651D"></a-box> <!-- الجدار الخلفي -->
+    <a-box position="-5 2.5 0" width="0.2" height="5" depth="10" color="#B5651D"></a-box> <!-- الجدار الجانبي الأيسر -->
+    <a-box position="5 2.5 0" width="0.2" height="5" depth="10" color="#B5651D"></a-box> <!-- الجدار الجانبي الأيمن -->
+
+    <!-- تقسيم الغرف داخل البيت -->
+    <a-box position="-3 1.5 2" width="4" height="3" depth="4" color="#4CC3D9" class="room" id="kitchen"></a-box>
+    <a-box position="3 1.5 2" width="4" height="3" depth="4" color="#EF2D5E" class="room" id="livingRoom"></a-box>
+    <a-box position="0 1.5 -3" width="4" height="3" depth="4" color="#FFC65D" class="room" id="bedroom"></a-box>
+    <a-box position="-3 1.5 -5" width="4" height="3" depth="4" color="#7BC8A4" class="room" id="majles"></a-box>
+
+    <!-- الكاميرا التي ستحدد اتجاه المستخدم -->
+    <a-camera id="camera" position="0 1.6 0" look-controls="pointerLockEnabled: true;" wasd-controls="enabled: true;"></a-camera>
+
+    <script>
+      let camera = document.querySelector('#camera');
+
+      // المستشعرات: التسارع والجيروسكوب
+      window.addEventListener('deviceorientation', function(event) {
+        let alpha = event.alpha;  // زاوية التوجيه
+        let beta = event.beta;    // زاوية الميل
+        let gamma = event.gamma;  // زاوية الدوران
+
+        // مع كل تغيير في الحركة، نقوم بتوجيه الكاميرا بناءً على اتجاه الجهاز
+        camera.setAttribute('rotation', {
+          x: beta,   // زاوية الميل
+          y: alpha,  // زاوية التوجيه
+          z: gamma   // زاوية الدوران
+        });
+      });
+
+      // التفاعل مع حركة المستخدم لتحديد الاتجاه
+      let movementSpeed = 0.05; // سرعة الحركة
+
+      let lastPos = { x: 0, z: 0 }; // لتتبع مكان الكاميرا الحالي
+
+      window.addEventListener('devicemotion', function(event) {
+        // الحصول على تسارع الجهاز في الاتجاهات المختلفة
+        let accX = event.acceleration.x;
+        let accZ = event.acceleration.z;
+
+        // تحريك الكاميرا بناءً على التسارع (الذي يتوافق مع الحركة الفعلية)
+        lastPos.x += accX * movementSpeed;
+        lastPos.z += accZ * movementSpeed;
+
+        // تحديث موقع الكاميرا بناءً على التسارع
+        camera.setAttribute('position', {
+          x: lastPos.x,
+          y: 1.6,   // بقاء الكاميرا على نفس الارتفاع
+          z: lastPos.z
+        });
+      });
+    </script>
+  </a-scene>
+</body>
+</html>
