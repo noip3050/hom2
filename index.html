@@ -11,48 +11,49 @@
       <!-- السماء -->
       <a-sky color="#ECECEC"></a-sky>
 
-      <!-- الجدران الخارجية -->
-      <a-box position="0 1.5 -15" width="30" height="3" depth="0.2" color="#888"></a-box>
-      <a-box position="-15 1.5 0" width="0.2" height="3" depth="30" color="#888"></a-box>
-      <a-box position="15 1.5 0" width="0.2" height="3" depth="30" color="#888"></a-box>
-      <a-box position="0 1.5 15" width="30" height="3" depth="0.2" color="#888"></a-box>
+      <!-- المجموعة التي تحتوي على البيئة -->
+      <a-entity id="world">
+        <!-- الجدران الخارجية -->
+        <a-box position="0 1.5 -15" width="30" height="3" depth="0.2" color="#888"></a-box>
+        <a-box position="-15 1.5 0" width="0.2" height="3" depth="30" color="#888"></a-box>
+        <a-box position="15 1.5 0" width="0.2" height="3" depth="30" color="#888"></a-box>
+        <a-box position="0 1.5 15" width="30" height="3" depth="0.2" color="#888"></a-box>
 
-      <!-- الغرف -->
-      <a-box position="-10 1.5 -10" width="8" height="3" depth="8" color="#FFC300">
-        <a-text
-          value="المطبخ"
-          position="0 1.8 0"
-          align="center"
-          color="#000"
-        ></a-text>
-      </a-box>
+        <!-- الغرف -->
+        <a-box position="-10 1.5 -10" width="8" height="3" depth="8" color="#FFC300">
+          <a-text
+            value="المطبخ"
+            position="0 1.8 0"
+            align="center"
+            color="#000"
+          ></a-text>
+        </a-box>
 
-      <a-box position="10 1.5 -10" width="8" height="3" depth="8" color="#4CAF50">
-        <a-text
-          value="غرفة النوم"
-          position="0 1.8 0"
-          align="center"
-          color="#FFF"
-        ></a-text>
-      </a-box>
+        <a-box position="10 1.5 -10" width="8" height="3" depth="8" color="#4CAF50">
+          <a-text
+            value="غرفة النوم"
+            position="0 1.8 0"
+            align="center"
+            color="#FFF"
+          ></a-text>
+        </a-box>
 
-      <a-box position="0 1.5 10" width="8" height="3" depth="8" color="#2196F3">
-        <a-text
-          value="المجلس"
-          position="0 1.8 0"
-          align="center"
-          color="#FFF"
-        ></a-text>
-      </a-box>
+        <a-box position="0 1.5 10" width="8" height="3" depth="8" color="#2196F3">
+          <a-text
+            value="المجلس"
+            position="0 1.8 0"
+            align="center"
+            color="#FFF"
+          ></a-text>
+        </a-box>
+      </a-entity>
 
       <!-- الكاميرا -->
-      <a-entity id="camera" camera wasd-controls-enabled="false" position="0 1.6 0">
-        <a-camera position="0 1.6 0"></a-camera>
-      </a-entity>
+      <a-camera position="0 1.6 0"></a-camera>
     </a-scene>
 
     <script>
-      const camera = document.querySelector("#camera");
+      const world = document.querySelector("#world");
 
       let steps = 0; // عدد الخطوات
       let lastZ = null; // لتخزين آخر قيمة للمحور Z
@@ -69,13 +70,14 @@
         // إذا تحرك المستخدم للأمام
         if (Math.abs(deltaZ) > 0.5) {
           steps++;
-          const currentPosition = camera.getAttribute("position");
 
-          // تحريك الكاميرا بناءً على الاتجاه
-          camera.setAttribute("position", {
-            x: currentPosition.x,
-            y: currentPosition.y,
-            z: currentPosition.z + (deltaZ > 0 ? -0.2 : 0.2),
+          const currentWorldPosition = world.getAttribute("position") || { x: 0, y: 0, z: 0 };
+
+          // تحريك العالم الافتراضي بالنسبة للمستخدم
+          world.setAttribute("position", {
+            x: currentWorldPosition.x,
+            y: currentWorldPosition.y,
+            z: currentWorldPosition.z + (deltaZ > 0 ? -0.2 : 0.2),
           });
 
           console.log(`خطواتك: ${steps}`);
@@ -86,27 +88,6 @@
 
       // تشغيل وظيفة تتبع الحركة
       window.addEventListener("devicemotion", handleMotion);
-
-      // وظيفة اختيار الغرفة المستهدفة
-      function navigateTo(target) {
-        const speech = new SpeechSynthesisUtterance();
-        speech.text = `اتجه نحو ${target}`;
-        speech.lang = "ar-SA";
-        window.speechSynthesis.speak(speech);
-      }
-
-      // إضافة أزرار للتنقل
-      const menu = document.createElement("div");
-      menu.style.position = "absolute";
-      menu.style.top = "10px";
-      menu.style.left = "10px";
-      menu.style.zIndex = "100";
-      menu.innerHTML = `
-        <button onclick="navigateTo('المطبخ')">المطبخ</button>
-        <button onclick="navigateTo('غرفة النوم')">غرفة النوم</button>
-        <button onclick="navigateTo('المجلس')">المجلس</button>
-      `;
-      document.body.appendChild(menu);
     </script>
   </body>
 </html>
